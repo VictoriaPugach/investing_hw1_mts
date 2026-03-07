@@ -34,14 +34,16 @@ def vwap_from_ohlcv(df: pd.DataFrame) -> pd.Series:
 
 def vwap_daily(df: pd.DataFrame) -> pd.Series:
     """VWAP сброс в начале каждого дня (если индекс — datetime)."""
-    typical = (df["high"] + df["low"] + df["close"]) / 3.0
-    out = pd.Series(index=df.index, dtype=float)
-    for gkey, g in df.groupby(df.index.date):
+    chunks = []
+    for _, g in df.groupby(df.index.date, sort=False):
         v = g["volume"]
-        t = typical.loc[g.index]
+        t = (g["high"] + g["low"] + g["close"]) / 3.0
         vwap_g = (t * v).cumsum() / v.cumsum().replace(0, np.nan)
-        out.loc[g.index] = vwap_g.values
-    return out
+        chunks.append(vwap_g)
+    if not chunks:
+        return pd.Series(index=df.index, dtype=float)
+    values = pd.concat(chunks).to_numpy()
+    return pd.Series(values, index=df.index, dtype=float)
 
 
 def add_indicators(

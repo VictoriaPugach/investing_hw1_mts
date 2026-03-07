@@ -9,21 +9,23 @@ from pathlib import Path
 import pandas as pd
 import matplotlib.pyplot as plt
 
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+
 PROJECT_ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from indicators import add_indicators, long_signal, short_signal
 from metrics import compute_metrics
-from backtest_isolated import load_data, backtest_isolated_exit
+from backtest_isolated import load_data
+from backtest_expert import backtest_simple_refined
 
 
 def run_grid(
     df: pd.DataFrame,
-    exit_bars: int = 20,
     ema_fast_range: list = None,
     ema_slow_range: list = None,
 ) -> pd.DataFrame:
-    """Решётчатый перебор периодов EMA. Возвращает таблицу результатов."""
+    """Решётчатый перебор EMA для улучшенной рабочей схемы 1h."""
     if ema_fast_range is None:
         ema_fast_range = [10, 15, 20, 25, 30]
     if ema_slow_range is None:
@@ -33,7 +35,27 @@ def run_grid(
         for slow in ema_slow_range:
             if slow <= fast:
                 continue
-            trades = backtest_isolated_exit(df, exit_bars=exit_bars, ema_fast=fast, ema_slow=slow)
+            trades = backtest_simple_refined(
+                df=df,
+                ema_fast=fast,
+                ema_slow=slow,
+                tp_atr_mult=1.5,
+                sl_atr_mult=1.5,
+                breakeven_atr=1.0,
+                trail_trigger_atr=1.5,
+                trail_lock_atr=0.5,
+                max_bars=40,
+                session_start=10,
+                session_end=17,
+                use_daily_vwap=True,
+                verbose=False,
+                trend_filter_ema=100,
+                adx_min=18,
+                rsi_long_min=52,
+                rsi_short_max=48,
+                vol_ratio_min=0.9,
+                slope_min=0.0002,
+            )
             m = compute_metrics(trades)
             rows.append({
                 "ema_fast": fast,
@@ -55,8 +77,7 @@ def main():
     df = load_data(symbol, timeframe)
     print(f"Баров: {len(df)}")
 
-    exit_bars = 20  # можно взять из метода 1
-    res_df = run_grid(df, exit_bars=exit_bars)
+    res_df = run_grid(df)
     res_df = res_df[res_df["n_trades"] >= 5]  # отсечь слишком мало сделок
 
     out_csv = PROJECT_ROOT / "data" / "method2_visual_results.csv"

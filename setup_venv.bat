@@ -1,5 +1,5 @@
 @echo off
-REM Создание виртуального окружения для TradingSystem и установка зависимостей
+REM Создание виртуального окружения и установка зависимостей
 cd /d "%~dp0"
 
 if exist venv (
@@ -24,6 +24,6 @@ echo.
 echo Готово. Чтобы пользоваться этим окружением:
 echo   1. В терминале: venv\Scripts\activate
 echo   2. В VS Code/Cursor: выбери интерпретатор Python из папки venv (Ctrl+Shift+P - "Python: Select Interpreter")
-echo   3. Для Jupyter в ноутбуке выбери ядро с путём ...\TradingSystem\venv\Scripts\python.exe
+echo   3. Для Jupyter в ноутбуке выбери ядро с путём ...\investing_hw1_mts\venv\Scripts\python.exe
 echo.
 pause

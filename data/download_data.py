@@ -354,7 +354,7 @@ def main():
     api_key = os.environ.get("FINAM_API_KEY", "").strip()
     DATA_DIR.mkdir(parents=True, exist_ok=True)
     if not api_key:
-        print("Hint: set FINAM_API_KEY in .env for Finam API v1 (ticker@mic).")
+        print("Укажи FINAM_API_KEY в .env для Finam API v1.")
 
     to_date = datetime.now()
     from_date = to_date - timedelta(days=730)
